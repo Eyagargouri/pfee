@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
-using System.Text.Json.Serialization;
 
 namespace CRM.Models;
 
 public partial class UtilisateurApplication
 {
-    public string? Ematricule { get; set; } = null!;
+    public string? Ematricule{ get; set; } = null!;
 
-    public int IdtypeUser { get; set; }
+    public int? IdtypeUser { get; set; }
 
     public string Login { get; set; } = null!;
 
@@ -29,8 +26,8 @@ public partial class UtilisateurApplication
     public bool? ActiveAvoir { get; set; }
 
     public bool? ActiveAvoirTic { get; set; }
-    
+
+    public virtual Employee? Employee { get; set; }
 
     public virtual TypeUtilisateur? IdtypeUserNavigation { get; set; } = null!;
-
 }

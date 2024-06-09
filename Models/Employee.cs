@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using CRM.Models;
 
-namespace CRM.Models;
+namespace CRM;
 
 public partial class Employee
 {
@@ -52,4 +53,10 @@ public partial class Employee
     public int? EnombreEnfant { get; set; }
 
     public int? EnombreCharge { get; set; }
+
+    public string? CodeTiers { get; set; } = null!;
+
+    public virtual UtilisateurApplication? EmatriculeNavigation { get; set; } = null!;
+
+    public virtual ICollection<Grh> Grhs { get; set; } = new List<Grh>();
 }

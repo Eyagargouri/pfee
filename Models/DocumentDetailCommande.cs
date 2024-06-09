@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using CRM.Models;
 
-namespace CRM.Models;
+namespace CRM;
 
 public partial class DocumentDetailCommande
 {

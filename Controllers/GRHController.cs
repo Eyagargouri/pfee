@@ -47,6 +47,24 @@ namespace CRM.Controllers
 
             return Grh;
         }
+        [HttpGet("ByType/{typeGrh}")]
+        public async Task<ActionResult<IEnumerable<Grh>>> GetGrhByType(string typeGrh)
+        {
+            if (_grhContext.Grhs == null)
+            {
+                return NotFound();
+            }
+
+            var grhs = await _grhContext.Grhs.Where(grh => grh.TypeGrh == typeGrh).ToListAsync();
+
+            if (grhs == null || grhs.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(grhs);
+        }
+
         [HttpPost]
         public async Task<ActionResult<Grh>> PostGrh(Grh grh)
         {

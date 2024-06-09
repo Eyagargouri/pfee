@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CRM.Models;
+namespace CRM;
 
 public partial class ListeFactureReglée
 {

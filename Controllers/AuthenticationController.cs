@@ -1,7 +1,6 @@
 ﻿using CRM.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -32,7 +31,7 @@ namespace CRM.Controllers
                 return BadRequest("Invalid user request!!!");
             }
             var authenticatedUser = _dbContext.UtilisateurApplications
-           .SingleOrDefault(u => u.Login == user.Login && u.Motdepasse == user.Motdepasse);
+                .SingleOrDefault(u => u.Login == user.Login && u.Motdepasse == user.Motdepasse);
             if (authenticatedUser != null)
             {
                 var issuer = _configuration["Jwt:Issuer"];
@@ -43,12 +42,11 @@ namespace CRM.Controllers
                 {
                     Subject = new ClaimsIdentity(new[]
                     {
-                        new Claim("Ematricule", Guid.NewGuid().ToString()),
-                        new Claim(JwtRegisteredClaimNames.Sub, user.Login),
-
-                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                    }),
-                    Expires = DateTime.UtcNow.AddMinutes(5),
+              new Claim("Ematricule", Guid.NewGuid().ToString()), // Assuming Id is the primary key
+           new Claim(JwtRegisteredClaimNames.Sub, user.Login),
+           new Claim("IdtypeUser", authenticatedUser.IdtypeUser.ToString()) // Include IdtypeUser claim
+       }),
+                    Expires = DateTime.UtcNow.AddMinutes(60),
                     Issuer = issuer,
                     Audience = audience,
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
@@ -57,11 +55,14 @@ namespace CRM.Controllers
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 var jwtToken = tokenHandler.WriteToken(token);
-                return Ok(jwtToken);
+
+
+                return Ok(new { token = jwtToken, idtypeuser = authenticatedUser.IdtypeUser });
             }
 
             return Unauthorized();
         }
+
         [HttpPost("register")]
         public IActionResult Register([FromBody] UtilisateurApplication newUser)
         {
@@ -70,22 +71,35 @@ namespace CRM.Controllers
                 return BadRequest("Invalid user request!!!");
             }
 
-            // Check if the user already exists
-            var existingUser = _dbContext.UtilisateurApplications.FirstOrDefault(u => u.Login == newUser.Login);
-            if (existingUser != null)
+            // Generate a random unique Ematricule
+            string generatedEmatricule;
+            bool isUnique = false;
+            Random random = new Random();
+
+            do
             {
-                return Conflict("User already exists");
+                generatedEmatricule = GenerateRandomEmatricule();
+                isUnique = !_dbContext.UtilisateurApplications.Any(u => u.Ematricule == generatedEmatricule);
+            } while (!isUnique);
+
+            // Retrieve the TypeUtilisateur based on the IdtypeUser provided in newUser
+            var typeUser = _dbContext.TypeUtilisateurs.FirstOrDefault(t => t.IdtypeU == newUser.IdtypeUser);
+            if (typeUser == null)
+            {
+                return BadRequest("Invalid type user provided");
             }
 
-            // Create a new user with a random Ematricule
+            // Create a new user
             var user = new UtilisateurApplication
             {
-                Ematricule = Guid.NewGuid().ToString(),
-
+                Ematricule = generatedEmatricule,
                 Login = newUser.Login,
-                Motdepasse = newUser.Motdepasse // You might want to hash the password here for security reasons
+                Motdepasse = newUser.Motdepasse, // You might want to hash the password here for security reasons
+                IdtypeUser = typeUser.IdtypeU, // Set the foreign key property
+              
+
             };
-            
+
             _dbContext.UtilisateurApplications.Add(user);
             _dbContext.SaveChanges();
 
@@ -93,6 +107,33 @@ namespace CRM.Controllers
         }
 
 
+        // Method to generate a random Ematricule
+        private string GenerateRandomEmatricule()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            Random random = new Random();
+            return new string(Enumerable.Repeat(chars, 10)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+   
+        [HttpGet("utilisateursapplication")]
+        public async Task<ActionResult<IEnumerable<UtilisateurApplication>>> Getusers()
+        {
+            if (_dbContext.UtilisateurApplications == null)
+            {
+                return NotFound();
+            }
+            return await _dbContext.UtilisateurApplications.ToListAsync();
+        }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TypeUtilisateur>>> Getjobs()
+        {
+            if (_dbContext.TypeUtilisateurs == null)
+            {
+                return NotFound();
+            }
+            return await _dbContext.TypeUtilisateurs.ToListAsync();
+        }
 
 
 

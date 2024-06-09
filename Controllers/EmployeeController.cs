@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRM.Controllers
 {
-    [Authorize]
+    
 
     [Route("api/[controller]")]
-    [ApiController]
+    [ApiController,Authorize]
     
     public class EmployeeController : ControllerBase
     {
@@ -18,7 +18,6 @@ namespace CRM.Controllers
 
         {
             _employeeContext = employeeContext;
-
 
         }
         [HttpGet]
@@ -30,6 +29,19 @@ namespace CRM.Controllers
             }
             return await _employeeContext.Employees.ToListAsync();
         }
+        [HttpGet("GetEmployeeNames")]
+        public async Task<ActionResult<IEnumerable<string>>> GetEmployeeNames()
+        {
+            var employees = await _employeeContext.Employees.ToListAsync();
+            if (employees == null)
+            {
+                return NotFound();
+            }
+
+            var employeeNames = employees.Select(e => $"{e.Enom} {e.Eprenom}").ToList();
+            return employeeNames;
+        }
+
         [HttpGet("{Ematricule}")]
         public async Task<ActionResult<Employee>> GetEmployee(String Ematricule)
         {
@@ -47,7 +59,7 @@ namespace CRM.Controllers
             return Employee;
         }
         [HttpPost]
-        [Authorize]
+     
         public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
         {
             _employeeContext.Employees.Add(employee);

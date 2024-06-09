@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using CRM.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CRM.Models;
+namespace CRM;
 
 public partial class EdidynamiqueHbcContext : DbContext
 {
@@ -159,7 +160,7 @@ public partial class EdidynamiqueHbcContext : DbContext
 
     public virtual DbSet<ComptaIntegrationAutomatique> ComptaIntegrationAutomatiques { get; set; }
 
-
+    
 
     public virtual DbSet<ConditionPayement> ConditionPayements { get; set; }
 
@@ -459,6 +460,8 @@ public partial class EdidynamiqueHbcContext : DbContext
 
     public virtual DbSet<Om> Oms { get; set; }
 
+    public virtual DbSet<Organigramme> Organigrammes { get; set; }
+
     public virtual DbSet<Parametre> Parametres { get; set; }
 
     public virtual DbSet<ParametreEdition> ParametreEditions { get; set; }
@@ -721,7 +724,7 @@ public partial class EdidynamiqueHbcContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=DESKTOP-G1FBNV1;Database=EDIDynamiqueHBC;Integrated Security=True;Trust Server Certificate=yes", x => x.UseNetTopologySuite());
+        => optionsBuilder.UseSqlServer("Server=DESKTOP-G1FBNV1; Database=EDIDynamiqueHBC; Trusted_Connection=True; \n Trust Server Certificate=yes", x => x.UseNetTopologySuite());
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -4221,6 +4224,7 @@ public partial class EdidynamiqueHbcContext : DbContext
             entity.Property(e => e.UniqueId).HasColumnName("UniqueID");
         });
 
+     
 
         modelBuilder.Entity<ConditionPayement>(entity =>
         {
@@ -6753,12 +6757,17 @@ public partial class EdidynamiqueHbcContext : DbContext
 
             entity.HasIndex(e => e.Ematricule, "IX_Employee");
 
+            entity.HasIndex(e => e.CodeTiers, "UC_CodeTiers").IsUnique();
+
             entity.Property(e => e.Ematricule)
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .IsFixedLength()
                 .UseCollation("French_CI_AI")
                 .HasColumnName("EMatricule");
+            entity.Property(e => e.CodeTiers)
+                .HasMaxLength(10)
+                .IsFixedLength();
             entity.Property(e => e.Eassurance)
                 .HasMaxLength(100)
                 .IsUnicode(false)
@@ -6867,6 +6876,11 @@ public partial class EdidynamiqueHbcContext : DbContext
                 .IsFixedLength()
                 .UseCollation("French_CI_AI")
                 .HasColumnName("ESituationFam");
+
+            entity.HasOne(d => d.EmatriculeNavigation).WithOne(p => p.Employee)
+                .HasForeignKey<Employee>(d => d.Ematricule)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_EMatricule");
         });
 
         modelBuilder.Entity<EnCoursLcaAe3>(entity =>
@@ -9645,6 +9659,11 @@ public partial class EdidynamiqueHbcContext : DbContext
                 .HasMaxLength(10)
                 .IsFixedLength()
                 .HasColumnName("TypeGRH");
+
+            entity.HasOne(d => d.CodeTiersNavigation).WithMany(p => p.Grhs)
+                .HasPrincipalKey(p => p.CodeTiers)
+                .HasForeignKey(d => d.CodeTiers)
+                .HasConstraintName("fk_CodeTiers");
         });
 
         modelBuilder.Entity<Groupement>(entity =>
@@ -11099,6 +11118,36 @@ public partial class EdidynamiqueHbcContext : DbContext
             entity.Property(e => e.Sup2Om)
                 .HasMaxLength(255)
                 .HasColumnName("SUP 2 OM");
+        });
+
+        modelBuilder.Entity<Organigramme>(entity =>
+        {
+            entity
+            
+                .HasNoKey()
+                .ToTable("Organigramme");
+                 entity.HasKey(e => e.Id);
+                 entity.Property(e => e.EmatriculeSubordonné)
+                  
+                  .HasMaxLength(20)
+                .IsUnicode(false)
+                .IsFixedLength();
+            
+            entity.Property(e => e.EmatriculeSupérieur)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .IsFixedLength();
+            entity.Property(e => e.Id)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .UseCollation("French_CI_AI");
+            entity.Property(e => e.NomSubordonné).HasMaxLength(50);
+            entity.Property(e => e.NomSupérieur).HasMaxLength(50);
+
+            entity.HasOne(d => d.IdNavigation).WithMany()
+                .HasForeignKey(d => d.Id)
+                .HasConstraintName("FK_Matricule");
         });
 
         modelBuilder.Entity<Parametre>(entity =>

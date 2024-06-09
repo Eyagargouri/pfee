@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CRM.Models;
+namespace CRM;
 
 public partial class Grh
 {
@@ -42,4 +42,7 @@ public partial class Grh
     public bool? EtatBp1 { get; set; }
 
     public string? Ref { get; set; }
+    public bool? Validation { get; set; }
+
+    public virtual Employee? CodeTiersNavigation { get; set; }
 }
